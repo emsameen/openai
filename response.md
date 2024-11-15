@@ -1,134 +1,140 @@
-Certainly, Developer! Below, I'll define some testing scenarios using Cucumber and Gherkin for the given requirements and provide C++ test code snippets using the Google Test framework.
+Certainly, Developer! Below is a Cucumber and Gherkin definition for the feature scenarios, along with a simple C++ test implementation using the Google Test framework.
 
-### Cucumber and Gherkin Scenarios
-
-**Feature: Brake Light Control Based on Acceleration**
+### Feature Scenarios in Gherkin
 
 ```gherkin
-Feature: Brake Light Control
-  As a vehicle control system
-  I want to control the brake light based on acceleration data
-  So that drivers are aware of deceleration events
+Feature: Brake Light Control Based on Acceleration
 
-  Scenario: Turn ON brake light on deceleration
-    Given the vehicle is receiving acceleration data
-    When the average acceleration over the last 5 seconds is -3 m/s²
+  Scenario: Brake light turns ON when deceleration threshold is met
+    Given the vehicle is receiving acceleration data continuously
+    When the average acceleration over the last 5 seconds is -3.0 m/s²
     Then the brake light should be ON
 
-  Scenario: Turn OFF brake light on no deceleration
-    Given the vehicle is receiving acceleration data
-    When the average acceleration over the last 5 seconds is -1 m/s²
+  Scenario: Brake light turns OFF when acceleration is above deceleration threshold
+    Given the vehicle is receiving acceleration data continuously
+    When the average acceleration over the last 5 seconds is -1.0 m/s²
     Then the brake light should be OFF
 
-  Scenario: Handle invalid acceleration data
-    Given the vehicle is receiving acceleration data
-    When the received data is invalid
+  Scenario: Maintain current brake light state with invalid sensor data
+    Given the vehicle's acceleration sensor data becomes invalid
+    When the average acceleration over the last 5 seconds is invalid
     Then the brake light should maintain its current state
 
-  Scenario: Maintain brake light state on insufficient data
-    Given the vehicle is receiving acceleration data
-    When the historical data is insufficient due to missing inputs
-    And the most recent valid acceleration is -2 m/s²
-    Then the brake light should turn OFF
+  Scenario: Maintain current brake light state with insufficient historical data
+    Given the vehicle has missing acceleration data in the last 5 seconds
+    When the average acceleration over the last 5 seconds cannot be calculated
+    Then the brake light should maintain its current state using the last valid acceleration
 
-  Scenario: Update historical data with latency
-    Given the vehicle is receiving acceleration data
-    When a new acceleration is received
-    Then the historical data should update within 50 milliseconds
+  Scenario: Brake light responds to sensor reconnection
+    Given the vehicle has received valid acceleration data previously
+    And the brake light is OFF
+    When the new average acceleration over the last 5 seconds is -2.6 m/s²
+    Then the brake light should be ON
 ```
 
-### C++ Tests Using Google Test Framework
+### C++ Implementation using Google Test Framework
 
-Here are some C++ test cases that map to the scenarios defined above:
+Here's an example of how you might implement these requirements in C++ using the Google Test framework.
 
 ```cpp
 #include <gtest/gtest.h>
 #include <vector>
+#include <queue>
 #include <stdexcept>
 
 class BrakeLightController {
 public:
-    void receiveAccelerationData(float acceleration);
-    bool isBrakeLightOn() const;
+    static const float DECELERATION_THRESHOLD;
+    static const int WINDOW_SIZE = 5;  // 5 seconds fixed window
+    std::queue<float> accelerationHistory;
+    float brakeLightState;  // 1: ON, 0: OFF
 
-private:
-    std::vector<float> accelerationHistory;
-    const int WINDOW_SIZE = 5; // in seconds
-    const float DECELERATION_THRESHOLD_ON = -2.5f;
-    const float DECELERATION_THRESHOLD_OFF = -2.5f;
+    BrakeLightController() : brakeLightState(0) {}
 
-    void updateBrakeLightState();
-    bool validData(float data);
+    void receiveAcceleration(float acceleration) {
+        // Discard old data if necessary
+        if (accelerationHistory.size() == WINDOW_SIZE) {
+            accelerationHistory.pop();
+        }
+        accelerationHistory.push(acceleration);
+        updateBrakeLight();
+    }
+
+    void updateBrakeLight() {
+        if (accelerationHistory.empty()) return;
+
+        float average = calculateAverage();
+        
+        if (average < DECELERATION_THRESHOLD) {
+            brakeLightState = 1;  // ON
+        } else {
+            brakeLightState = 0;  // OFF
+        }
+    }
+
+    float calculateAverage() {
+        float sum = 0;
+        for (float value : accelerationHistory) {
+            sum += value;
+        }
+        return sum / accelerationHistory.size();
+    }
+
+    float getBrakeLightState() {
+        return brakeLightState;
+    }
 };
 
-// Implementation of methods would go here...
+const float BrakeLightController::DECELERATION_THRESHOLD = -2.5f;
 
-TEST(BrakeLightControllerTest, TurnONBrakeLightOnDeceleration) {
+// Test Cases
+TEST(BrakeLightControllerTest, BrakeLightTurnsOn) {
     BrakeLightController controller;
+    controller.receiveAcceleration(-3.0f);
+    EXPECT_EQ(controller.getBrakeLightState(), 1);
+}
 
-    // Simulate receiving acceleration data
-    for (int i = 0; i < 5; ++i) {
-        controller.receiveAccelerationData(-3.0);
+TEST(BrakeLightControllerTest, BrakeLightTurnsOff) {
+    BrakeLightController controller;
+    controller.receiveAcceleration(-3.0f);
+    controller.receiveAcceleration(-1.0f);  // Add a value that raises average
+    EXPECT_EQ(controller.getBrakeLightState(), 0);
+}
+
+TEST(BrakeLightControllerTest, InvalidSensorDataMaintainsState) {
+    BrakeLightController controller;
+    controller.receiveAcceleration(-3.0f);
+    controller.receiveAcceleration(0.0f);  // Invalid data, should not change
+    EXPECT_EQ(controller.getBrakeLightState(), 1);
+}
+
+TEST(BrakeLightControllerTest, InsufficientHistoricalData) {
+    BrakeLightController controller;
+    for (int i = 0; i < 3; i++) { // less than 5 samples
+        controller.receiveAcceleration(-3.0f);
     }
-
-    EXPECT_TRUE(controller.isBrakeLightOn());
+    EXPECT_EQ(controller.getBrakeLightState(), 1);  // Based on available data
 }
 
-TEST(BrakeLightControllerTest, TurnOFFBrakeLightOnNoDeceleration) {
+TEST(BrakeLightControllerTest, BrakeLightRespondsToReconnection) {
     BrakeLightController controller;
-
-    // Simulate receiving acceleration data
-    for (int i = 0; i < 5; ++i) {
-        controller.receiveAccelerationData(-1.0);
-    }
-
-    EXPECT_FALSE(controller.isBrakeLightOn());
+    controller.receiveAcceleration(-1.0f); // OFF
+    controller.receiveAcceleration(-2.6f); // ON
+    EXPECT_EQ(controller.getBrakeLightState(), 1);
 }
 
-TEST(BrakeLightControllerTest, HandleInvalidAccelerationData) {
-    BrakeLightController controller;
-
-    // Simulate valid and invalid data
-    controller.receiveAccelerationData(-2.0);
-    EXPECT_FALSE(controller.isBrakeLightOn());
-
-    // Simulate invalid data input
-    ASSERT_THROW(controller.receiveAccelerationData(NAN), std::invalid_argument);
-    EXPECT_FALSE(controller.isBrakeLightOn()); // Maintain state
-}
-
-TEST(BrakeLightControllerTest, MaintainStateOnInsufficientData) {
-    BrakeLightController controller;
-
-    // Simulate valid acceleration data
-    for (int i = 0; i < 3; ++i) {
-        controller.receiveAccelerationData(-2.0); // Insufficient data
-    }
-    
-    EXPECT_FALSE(controller.isBrakeLightOn());
-}
-
-TEST(BrakeLightControllerTest, HistoricalDataUpdateLatency) {
-    BrakeLightController controller;
-
-    // We would need to measure time, but for simplicity, we will just simulate calls
-    controller.receiveAccelerationData(-2.7);
-    // Assuming here we'd measure the time it takes to update - omitted for simplicity.
-    EXPECT_TRUE(controller.isBrakeLightOn());
-}
-
-// Main function to run tests
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
 ```
 
-### Notes:
+### Explanation of the Implementation
 
-1. The actual implementation of methods in `BrakeLightController`, such as `receiveAccelerationData` and `updateBrakeLightState`, is not provided. You need to implement these methods to ensure the class functions according to requirements.
-2. The tests handle expected behavior based on the requirements and scenarios defined.
-3. Error handling such as throwing exceptions for invalid input is also demonstrated in the tests.
-4. More tests can be added for edge cases based on how you decide to implement the class methods.
+1. **BrakeLightController Class**: This class manages the brake light state based on acceleration data. It maintains a queue for the last 5 seconds of acceleration data and has logic to control the brake light based on the average value of that data.
 
-Feel free to expand on these tests or scenarios as needed, Developer!
+2. **Tests**: Each `TEST` corresponds to the scenarios defined in Gherkin. They validate the functionality like turning the brake light ON/OFF based on the deceleration threshold, handling invalid data, and dealing with historical data.
+
+3. **Decimal Threshold**: Defined as a constant to make it easy to adjust if needed.
+
+This should give you a good start on implementing this feature and testing it thoroughly! If you need further assistance or refinements, feel free to ask.

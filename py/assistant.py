@@ -32,8 +32,7 @@ def write_response(response):
 
 use_case = ""
 requirement = load_requirements()
-message_content = f"Define testing scinarios using Cucumber and Gherkin and create some C++ tests using google test framework for the follwoing requirements: \n{requirement}"
-print (message_content)
+message_content = f"Define feature scenarios using Cucumber and Gherkin and create C++ tests using google test framework for the following requirements: \n{requirement}"
 
 # Create an OpenAI assistant
 def create_openai_assistant(name, instructions) -> Assistant:
@@ -106,8 +105,8 @@ def wait_for_run_completion(thread_id, run_id, sleep_interval=5):
 assistant = create_openai_assistant(
     client, 
     "Software Automation Test Engineer", 
-    """You are a professional Software Test Automation  Engineer that can do the following tasks:
-        - Analyse  requirement and list the main points that need testing.
+    """You are a professional Software Automation Test Engineer that can do the following tasks:
+        - Analyze requirements and list the main points that need testing.
         - Break down this requirement into key testing elements (inputs, actions, expected outcomes).
         - Generate high-level test scenarios based on this requirement.
         - List positive and negative test scenarios for this functionality.

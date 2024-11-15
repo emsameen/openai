@@ -16,9 +16,19 @@ ASSISTANT_ROLE = "engineer"
 
 model = os.environ.get("OPENAI_MODEL")
 assistant_id = os.environ.get("OPENAI_ASSISTANT_ID")
-print(assistant_id)
 
-message_content = "How do I create test cases for defined requirements using Cucumber and Gherkin with example for C++ language?"
+def load_requirements() -> str:
+    try:
+        with open("software_requirements.md", "r") as file:
+            req = file.read()
+        return req
+    except FileNotFoundError:
+        print("The requirements file does not exist.")
+
+use_case = ""
+requirement = load_requirements()
+message_content = f"Define testing scinarios using Cucumber and Gherkin and create some C++ tests using google test framework for the follwoing requirements: \n{requirement}"
+print (message_content)
 
 # Create an OpenAI assistant
 def create_openai_assistant(name, instructions) -> Assistant:

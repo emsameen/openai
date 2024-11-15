@@ -25,6 +25,11 @@ def load_requirements() -> str:
     except FileNotFoundError:
         print("The requirements file does not exist.")
 
+def write_response(response): 
+    # Open the file in write mode ('w')
+    with open("response.md", "w") as file:
+        file.write(response)
+
 use_case = ""
 requirement = load_requirements()
 message_content = f"Define testing scinarios using Cucumber and Gherkin and create some C++ tests using google test framework for the follwoing requirements: \n{requirement}"
@@ -89,7 +94,7 @@ def wait_for_run_completion(thread_id, run_id, sleep_interval=5):
                 messages = client.beta.threads.messages.list(thread_id=thread_id)
                 last_message = messages.data[0]
                 response = last_message.content[0].text.value
-                print(f"Assistant Response: {response}")
+                write_response(response)
                 break
         except Exception as e:
             logging.error(f"An error occurred while retrieving the run: {e}")

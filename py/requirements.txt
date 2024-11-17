@@ -1,2 +1,6 @@
 python-dotenv
+# Open AI
 openai
+# UI 
+streamlit
+watchdog

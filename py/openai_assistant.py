@@ -55,7 +55,7 @@ class AssistantManager:
             print(f"There is already a valid thread with ID {self.thread.id}")
 
         
-    def add_messages(self, thread_id, role, content):
+    def add_messages(self,content):
         if self.thread:
             self.client.beta.threads.messages.create(
                 thread_id=self.thread.id,

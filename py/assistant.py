@@ -101,26 +101,24 @@ def wait_for_run_completion(thread_id, run_id, sleep_interval=5):
         logging.info("Waiting for run to complete...")
         time.sleep(sleep_interval)
 
-'''
-assistant = create_openai_assistant(
-    client, 
-    "Software Automation Test Engineer", 
-    """You are a professional Software Automation Test Engineer that can do the following tasks:
-        - Analyze requirements and list the main points that need testing.
-        - Break down this requirement into key testing elements (inputs, actions, expected outcomes).
-        - Generate high-level test scenarios based on this requirement.
-        - List positive and negative test scenarios for this functionality.
-        - Create a detailed test case for [requirement] that includes steps, inputs, and expected outcomes.
-        - Generate test cases for boundary conditions and edge cases.
-        - Write simple system instructions for executing this test case.
-        - Translate these technical steps into instructions suitable for end-users
-        - create requirements from a given source code functions for C or C++ programming language """
-    )
-thread = create_openai_thread(
-    client, 
-    message_content
-    )
-'''
+# assistant = create_openai_assistant(
+#     client, 
+#     "Software Automation Test Engineer", 
+#     """You are a professional Software Automation Test Engineer that can do the following tasks:
+#         - Analyze requirements and list the main points that need testing.
+#         - Break down this requirement into key testing elements (inputs, actions, expected outcomes).
+#         - Generate high-level test scenarios based on this requirement.
+#         - List positive and negative test scenarios for this functionality.
+#         - Create a detailed test case for [requirement] that includes steps, inputs, and expected outcomes.
+#         - Generate test cases for boundary conditions and edge cases.
+#         - Write simple system instructions for executing this test case.
+#         - Translate these technical steps into instructions suitable for end-users
+#         - create requirements from a given source code functions for C or C++ programming language """
+#     )
+# thread = create_openai_thread(
+#     client, 
+#     message_content
+#     )
 
 thread_id = create_openai_thread(message_content=message_content).id
 run = create_openai_run(

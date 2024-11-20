@@ -5,6 +5,7 @@ from openai.types.beta.threads import Message, Run
 
 class Constants:
     assistant_id = "asst_G0l99J1mt8FoKs3lOofv7Jok"
+    assistant_name = "Software Automation Test Engineer"
     thread_id = "thread_rwQoDHU6tiTPLyU4Ruko6bsi"
     USER_ROLE = "developer"
     ASSISTANT_ROLE = "assistant"
@@ -31,6 +32,21 @@ class AssistantManager:
             )
         else:
             self.create_thread()
+
+    def retrieve_assistant(self, name) -> bool:
+        __assistants_list = self.client.beta.assistants.list(
+            order="desc",
+            limit="5",
+        )
+        
+        # search for assistant with the given name
+        for __assistant in __assistants_list.data:
+            if __assistant.name == name:
+                self.assistant = __assistant
+                Constants.thread_id = __assistant.id
+                return True
+        return False
+            
 
     def create_assistant(self, name, instrauctions, tools):
         if not self.assistant:
@@ -92,5 +108,5 @@ if __name__ == "__main__":
     assistant = AssistantManager()
     print(f"Current Assistant: {assistant.assistant.id}")
     print(f"Current Thread: {assistant.thread.id}")
-
-    assistant.process_message()
+    assistant.retrieve_assistant(Constants.assistant_name)
+    #assistant.process_message()

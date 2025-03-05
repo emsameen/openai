@@ -1,5 +1,7 @@
-Improve the quality of the requirements, and provide the result in the same data format (Sphinx-Needs)
- .. sys_req:: Brake Light Control Based on Acceleration
+Define feature scenarios using Cucumber and Gherkin and create C++ tests for each case 
+        using the GoogleTest Framework for the following requirements: 
+        
+.. sys_req:: Brake Light Control Based on Acceleration
    :id: SYSRQ_EXAMPLE_1
    :status: Accepted
    :tags: example, sys_req, valid
@@ -21,3 +23,56 @@ Improve the quality of the requirements, and provide the result in the same data
 
    **Error Handling:**
    If the sensor data is invalid or unavailable, the app shall maintain the current state of the brake light until valid data is received. If the historical data becomes insufficient due to missing inputs, the app shall default to using the most recent valid acceleration value for decision-making.
+for the 
+        source code:
+#include <deque>        // For std::deque
+#include <numeric>      // For std::accumulate
+#include <cmath>        // For std::isnan
+
+class BrakeLightController {
+public:
+    void addAcceleration(double acceleration) {
+        if (validAcceleration(acceleration)) {
+            accelerationHistory.push_back(acceleration);
+            if (accelerationHistory.size() > windowSize) {
+                accelerationHistory.pop_front();
+            }
+        } 
+        calculateState();
+    }
+
+    bool isBrakeLightOn() const {
+        return brakeLightOn;
+    }
+
+    void setSensorState(bool available) {
+        sensorAvailable = available;
+        if (!sensorAvailable) {
+            // If sensor is disconnected, maintain the current state
+            return;
+        }
+    }
+
+private:
+    static constexpr int windowSize = 5; // in seconds
+    std::deque<double> accelerationHistory;
+    bool brakeLightOn = false;
+    bool sensorAvailable = true;
+    
+    void calculateState() {
+        if (!sensorAvailable) return;
+
+        if (accelerationHistory.size() < windowSize) {
+            // Use last valid acceleration as default if history is insufficient
+            brakeLightOn = (accelerationHistory.back() < -2.5);
+        } else {
+            double avgAcceleration = std::accumulate(accelerationHistory.begin(), accelerationHistory.end(), 0.0) / accelerationHistory.size();
+            brakeLightOn = (avgAcceleration < -2.5);
+        }
+    }
+
+    bool validAcceleration(double acceleration) {
+        // Assume any value other than NaN or absurd values is valid for this example
+        return !std::isnan(acceleration);
+    }
+};

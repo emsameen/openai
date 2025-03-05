@@ -1,80 +1,103 @@
-Sure, Developer! Below is the implementation of feature scenarios using Cucumber and Gherkin, along with the corresponding C++ tests using the Google Test framework for the given requirements on the Brake Light Control based on acceleration.
+Certainly, Developer! Below, I'll define feature scenarios using Cucumber and Gherkin syntax based on the given brake light control requirements. Following that, I'll create corresponding C++ tests using the GoogleTest framework.
 
-### Cucumber Feature File (BrakeLightControl.feature)
+### Feature Scenarios in Gherkin
 
 ```gherkin
 Feature: Brake Light Control Based on Acceleration
+  As a vehicle control system
+  I want to control the brake light based on acceleration data
+  So that the brake light informs other drivers when the vehicle is decelerating
 
-  Scenario: Brake light turns ON when deceleration exceeds threshold
-    Given the vehicle is in motion
-    When the acceleration values are input as [-1.0, -2.0, -3.0, -2.5, -2.6] over 5 seconds
-    Then the brake light state should be "ON"
+  Background:
+    Given a brake light controller is initialized
 
-  Scenario: Brake light turns OFF when acceleration is above threshold
-    Given the vehicle is in motion
-    When the acceleration values are input as [-1.0, -1.0, -1.5, -1.0, 0.0] over 5 seconds
-    Then the brake light state should be "OFF"
+  Scenario: Brake light should turn ON when deceleration is below threshold
+    When I add acceleration value -3.0
+    Then the brake light should be ON
 
-  Scenario: Maintain brake light state on invalid data
-    Given the vehicle is in motion
-    When the acceleration values are input as [-1.0, "INVALID", -2.5, -3.0, -2.7] over 5 seconds
-    Then the brake light state should remain "OFF"
+  Scenario: Brake light should turn OFF when deceleration is above threshold
+    Given the brake light is ON
+    When I add acceleration value -1.0
+    Then the brake light should be OFF
 
-  Scenario: Default to last valid acceleration on insufficient data
-    Given the vehicle is in motion
-    When the acceleration values are input as [-2.0, -2.5, NULL, NULL, NULL] over 5 seconds
-    Then the brake light state should be "ON"
+  Scenario: Maintain brake light state when sensor is disconnected
+    Given I add acceleration value -3.0
+    And the sensor is disconnected
+    When I add acceleration value -1.0
+    Then the brake light should be ON
+
+  Scenario: Use last valid acceleration if history is insufficient
+    Given I have added 3 acceleration values: -3.0, -2.0, 0.0
+    When I add acceleration value -1.0
+    Then the brake light should remain ON
+
+  Scenario: Ignore invalid acceleration values
+    Given I add acceleration value -3.0
+    When I add acceleration value NaN
+    Then the brake light should remain ON
 ```
 
-### C++ Tests using Google Test Framework
+### C++ Tests using GoogleTest Framework
+
+Here’s how you can implement these scenarios in C++ with GoogleTest:
 
 ```cpp
 #include <gtest/gtest.h>
-#include <vector>
-#include <stdexcept>
-#include "BrakeLightControl.h" // Assume this contains the implementation
+#include <cmath> // For std::isnan
 
-class BrakeLightControlTest : public ::testing::Test {
+class BrakeLightControllerTest : public ::testing::Test {
 protected:
-    BrakeLightControl brakeLightControl;
+    BrakeLightController controller;
 
     void SetUp() override {
-        // Reset the state before each test
-        brakeLightControl.reset();
+        // Initial state is off
+        controller = BrakeLightController();
     }
 };
 
-TEST_F(BrakeLightControlTest, TurnsOnBrakeLightOnDeceleration) {
-    std::vector<double> acceleration = {-1.0, -2.0, -3.0, -2.5, -2.6};
-    brakeLightControl.processAcceleration(acceleration);
-    EXPECT_EQ(brakeLightControl.getBrakeLightState(), "ON");
+TEST_F(BrakeLightControllerTest, BrakeLightTurnsOn) {
+    controller.addAcceleration(-3.0);
+    EXPECT_TRUE(controller.isBrakeLightOn());
 }
 
-TEST_F(BrakeLightControlTest, TurnsOffBrakeLightOnAcceleration) {
-    std::vector<double> acceleration = {-1.0, -1.0, -1.5, -1.0, 0.0};
-    brakeLightControl.processAcceleration(acceleration);
-    EXPECT_EQ(brakeLightControl.getBrakeLightState(), "OFF");
+TEST_F(BrakeLightControllerTest, BrakeLightTurnsOff) {
+    controller.addAcceleration(-3.0);
+    EXPECT_TRUE(controller.isBrakeLightOn()); // Should be ON
+    controller.addAcceleration(-1.0);
+    EXPECT_FALSE(controller.isBrakeLightOn()); // Should be OFF
 }
 
-TEST_F(BrakeLightControlTest, MaintainsStateOnInvalidData) {
-    std::vector<std::string> acceleration = {"-1.0", "INVALID", "-2.5", "-3.0", "-2.7"};
-    brakeLightControl.processAcceleration(acceleration);
-    EXPECT_EQ(brakeLightControl.getBrakeLightState(), "OFF");
+TEST_F(BrakeLightControllerTest, MaintainStateWhenSensorDisconnected) {
+    controller.addAcceleration(-3.0);
+    EXPECT_TRUE(controller.isBrakeLightOn()); // Should be ON
+    controller.setSensorState(false);
+    controller.addAcceleration(-1.0);
+    EXPECT_TRUE(controller.isBrakeLightOn()); // Should remain ON due to disconnection
 }
 
-TEST_F(BrakeLightControlTest, DefaultsToLastValidOnInsufficientData) {
-    std::vector<std::string> acceleration = {"-2.0", "-2.5", "NULL", "NULL", "NULL"};
-    brakeLightControl.processAcceleration(acceleration);
-    EXPECT_EQ(brakeLightControl.getBrakeLightState(), "ON");
+TEST_F(BrakeLightControllerTest, UseLastValidAccelerationIfHistoryIsInsufficient) {
+    controller.addAcceleration(-3.0);
+    controller.addAcceleration(-2.0);
+    controller.addAcceleration(0.0);
+    // Only 3 values added, not enough for a 5s window
+    controller.addAcceleration(-1.0);
+    EXPECT_TRUE(controller.isBrakeLightOn()); // Should be ON, as it's using last valid
+}
+
+TEST_F(BrakeLightControllerTest, IgnoreInvalidAccelerationValues) {
+    controller.addAcceleration(-3.0);
+    EXPECT_TRUE(controller.isBrakeLightOn()); // Should be ON
+    controller.addAcceleration(NAN); // Invalid input
+    EXPECT_TRUE(controller.isBrakeLightOn()); // Should remain ON
 }
 ```
 
-### Explanation:
-1. **Feature file**: This file defines the behaviors of the brake light control system based on various scenarios using Gherkin syntax.
-   - Each scenario describes the initial state, input values, and expected outcomes.
-   
-2. **C++ Tests**:
-   - The `BrakeLightControlTest` class tests various features of the Brake Light Control system using Google Test.
-   - Tests are built to verify that the brake light activates or deactivates based on the acceleration data, including scenarios for invalid input and handling insufficient historical data.
+### Explanation
 
-You can implement the `BrakeLightControl` class with the necessary logic to handle the described functionalities. Be sure to test error conditions, ensuring robust handling of sensor connectivity and data validation.
+1. **Feature Scenarios**: These Gherkin scenarios outline different behaviors of the `BrakeLightController` based on the input acceleration values. 
+
+2. **C++ Tests**: Each test corresponds to a specific scenario, invoking methods on the `BrakeLightController` and verifying the expected states of the brake light.
+
+3. **Setup and Assertions**: The `SetUp` function initializes the `BrakeLightController`, and assertions are used to validate the expected states.
+
+Feel free to expand or modify these scenarios and tests based on additional requirements or specific edge cases you may encounter in your system!

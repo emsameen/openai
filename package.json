@@ -1,0 +1,28 @@
+{
+  "name": "reqai",
+  "displayName": "ReqAI",
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "reqai.swfCheckRequiremenets",
+        "title": "Swf Check Requiremenets"
+      },
+      {
+        "command": "reqai.swfGenerateTests",
+        "title": "Swf Generate Tests"
+      }
+    ]
+  },
+  "activationEvents": [
+    "onCommand:reqai.swfCheckRequiremenets",
+    "onCommand:reqai.swfGenerateTests"
+  ],
+  "dependencies": {
+    "ws": "^8.4.0"
+  },
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.58.0"
+  }
+}

@@ -66,13 +66,13 @@ def write_response(response):
         file.write(response)
 
 #prompt = f"What can be improved in the requirements ?\nRequirements: \n{requirement}"
-prompt = f"Improve the quality of the requirements, and provide the result in the same data format (Sphinx-Needs)\n {requirement}"
+#prompt = f"Improve the quality of the requirements, and provide the result in the same data format (Sphinx-Needs)\n {requirement}"
 #prompt = f"What are potintial mistakes in the requirements below:\n {requirement}"
 
-# prompt = f"""Define feature scenarios using Cucumber and Gherkin and create C++ tests for each case 
-#         using the {test_framework} Framework for the following requirements: 
-#         \n{requirement}\nfor the 
-#         source code:\n{sourcecode}"""
+prompt = f"""Define feature scenarios using Cucumber and Gherkin and create C++ tests for each case 
+        using the {test_framework} Framework for the following requirements: 
+        \n{requirement}\nfor the 
+        source code:\n{sourcecode}"""
 
 write_prompt(prompt)
 

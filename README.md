@@ -2,11 +2,19 @@
 
 This project is about creating an automation test assistant using [OpenAI Assiatant API](https://platform.openai.com/docs/assistants/overview).
 
-## Setup
+## Setup & Run
 
-python -m venv demo_env
-source demo_env/bin/activate
-python -m pip install xyz
+```bash
+python -m venv .venv
+```
+
+```bash
+source .venv/bin/activate
+```
+
+```bash
+python -m pip install -r requirements.txt
+```
 
 ## Example Assistant Result
 

@@ -1,6 +1,7 @@
 python-dotenv
-# Open AI
 openai
-# UI 
 streamlit
 watchdog
+vscode.py
+tavily-python==0.5.0
+termcolor
